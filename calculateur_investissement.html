@@ -1,0 +1,179 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur d'Investissement</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        
+        .container {
+            width: 80%;
+            max-width: 1200px;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .flex-container {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .card {
+            flex: 1;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Calculateur d'Investissement</h1>
+        </header>
+        <div class="flex-container">
+            <div class="card">
+                <h2>Paramètres</h2>
+                <div class="form-group">
+                    <label for="miseDeFonds">Mise de Fonds</label>
+                    <input type="number" id="miseDeFonds" name="miseDeFonds">
+                </div>
+                <div class="form-group">
+                    <label for="prixInvestissement">Prix de l'Investissement</label>
+                    <input type="number" id="prixInvestissement" name="prixInvestissement">
+                </div>
+                <div class="form-group">
+                    <label for="tauxInteret">Taux d'Intérêt (%)</label>
+                    <input type="number" step="0.01" id="tauxInteret" name="tauxInteret">
+                </div>
+                <div class="form-group">
+                    <label for="dureeAmortissement">Durée d'Amortissement</label>
+                    <select id="dureeAmortissement" name="dureeAmortissement">
+                        <option value="25">25 ans</option>
+                        <option value="30">30 ans</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="loyer">Loyer Mensuel</label>
+                    <input type="number" id="loyer" name="loyer">
+                </div>
+                <div class="form-group">
+                    <label for="tauxTaxesProprietes">Taux de Taxes Propriétés (%)</label>
+                    <input type="number" step="0.01" id="tauxTaxesProprietes" name="tauxTaxesProprietes">
+                </div>
+                <div class="form-group">
+                    <label for="tauxReserve">Taux de Réserve (%)</label>
+                    <input type="number" step="0.01" id="tauxReserve" name="tauxReserve">
+                </div>
+            </div>
+            <div class="card">
+                <h2>Résultats</h2>
+                <div id="results">
+                    <p>Veuillez remplir les champs pour voir les résultats.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = {
+                miseDeFonds: '',
+                prixInvestissement: '',
+                tauxInteret: '',
+                dureeAmortissement: '25',
+                loyer: '',
+                tauxTaxesProprietes: '3',
+                tauxReserve: '4',
+            };
+
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => input.addEventListener('input', handleChange));
+
+            function handleChange(event) {
+                const { name, value } = event.target;
+                params[name] = value;
+                calculerInvestissement();
+            }
+
+            function calculerInvestissement() {
+                const mise = parseFloat(params.miseDeFonds) || 0;
+                const prix = parseFloat(params.prixInvestissement) || 0;
+                const taux = (parseFloat(params.tauxInteret) || 0) / 100 / 12;
+                const mois = parseInt(params.dureeAmortissement) * 12;
+                const loyerMensuel = parseFloat(params.loyer) || 0;
+                const tauxTaxes = (parseFloat(params.tauxTaxesProprietes) || 0) / 100;
+                const tauxReserve = (parseFloat(params.tauxReserve) || 0) / 100;
+
+                const montantHypotheque = prix - mise;
+                const paiementMensuel = montantHypotheque > 0 && taux > 0
+                    ? (montantHypotheque * taux * Math.pow(1 + taux, mois)) / (Math.pow(1 + taux, mois) - 1)
+                    : 0;
+
+                const taxesProprietes = (prix * tauxTaxes) / 12;
+                const reserve = loyerMensuel * tauxReserve;
+                const resteApresCharges = loyerMensuel - paiementMensuel - taxesProprietes - reserve;
+
+                afficherResultats({
+                    montantHypotheque: montantHypotheque.toFixed(2),
+                    paiementMensuel: paiementMensuel.toFixed(2),
+                    taxesProprietes: taxesProprietes.toFixed(2),
+                    reserve: reserve.toFixed(2),
+                    resteApresCharges: resteApresCharges.toFixed(2),
+                });
+            }
+
+            function afficherResultats(resultat) {
+                const resultsContainer = document.getElementById('results');
+                resultsContainer.innerHTML = `
+                    <p><strong>Montant de l'hypothèque :</strong> ${resultat.montantHypotheque} $</p>
+                    <p><strong>Paiement mensuel :</strong> ${resultat.paiementMensuel} $</p>
+                    <p><strong>Taxes de propriété mensuelles :</strong> ${resultat.taxesProprietes} $</p>
+                    <p><strong>Réserve mensuelle :</strong> ${resultat.reserve} $</p>
+                    <p><strong>Reste après charges :</strong> ${resultat.resteApresCharges} $</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
